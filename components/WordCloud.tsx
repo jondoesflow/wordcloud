@@ -89,7 +89,7 @@ export default function WordCloud({ words }: WordCloudProps) {
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="border border-gray-300 rounded-lg mx-auto w-full"
+        className="border border-gray-300 dark:border-gray-600 rounded-lg mx-auto w-full bg-white dark:bg-gray-700"
         style={{ maxWidth: '100%', height: 'auto' }}
       />
     </div>
