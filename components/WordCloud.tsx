@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import cloud from 'd3-cloud';
 import { WordFrequency } from '@/lib/useWords';
 
@@ -10,6 +10,23 @@ interface WordCloudProps {
 
 export default function WordCloud({ words }: WordCloudProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        const isMobile = width < 640;
+        const height = isMobile ? 400 : 600;
+        setDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current || words.length === 0) return;
@@ -18,16 +35,16 @@ export default function WordCloud({ words }: WordCloudProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const { width, height } = dimensions;
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Calculate font sizes based on frequency
+    // Calculate font sizes based on frequency and screen size
     const maxValue = Math.max(...words.map((w) => w.value));
-    const minSize = 16;
-    const maxSize = 80;
+    const isMobile = width < 640;
+    const minSize = isMobile ? 12 : 16;
+    const maxSize = isMobile ? 50 : 80;
 
     const layout = cloud()
       .size([width, height])
@@ -37,7 +54,7 @@ export default function WordCloud({ words }: WordCloudProps) {
           size: minSize + ((w.value / maxValue) * (maxSize - minSize)),
         }))
       )
-      .padding(5)
+      .padding(isMobile ? 3 : 5)
       .rotate(() => 0)
       .font('Arial')
       .fontSize((d: any) => d.size)
@@ -64,14 +81,17 @@ export default function WordCloud({ words }: WordCloudProps) {
 
       ctx.restore();
     }
-  }, [words]);
+  }, [words, dimensions]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={800}
-      height={600}
-      className="border border-gray-300 rounded-lg mx-auto"
-    />
+    <div ref={containerRef} className="w-full">
+      <canvas
+        ref={canvasRef}
+        width={dimensions.width}
+        height={dimensions.height}
+        className="border border-gray-300 rounded-lg mx-auto w-full"
+        style={{ maxWidth: '100%', height: 'auto' }}
+      />
+    </div>
   );
 }
